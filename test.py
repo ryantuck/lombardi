@@ -60,7 +60,7 @@ def fit_histogram(data, bin_size):
     bins = int((d_max-d_min)/bin_size)
 
     # generate normalized histogram of relative frequencies
-    y, x = np.histogram(data, bins=bins, normed=True)
+#    y, x = np.histogram(data, bins=bins, normed=True)
 
     # generate fit function
     z = scipy.stats.gaussian_kde(data)
@@ -74,15 +74,27 @@ def fit_histogram(data, bin_size):
     # normalize y so sum = 1
     y_norm = [i/sum(y) for i in y]
 
-    return (x,y, bins)
-    # plot curve and histogram to show hope dope the pairing is
+    return (x,y_norm, bins)
+
+# plot curve and histogram to show hope dope the pairing is
     plt.plot(x,y,c='r')
     plt.hist([j - 0.5 for j in data], normed=True, bins=(d_max-d_min))
     plt.savefig('x.png')
 
 
+def print_brady_by_game():
+    q_brady = nfldb.Query(db)
+    q_brady.game(season_year=2015, season_type='Regular', week=1)
+    q_brady.player(full_name='Tom Brady')
+    for pp in q_brady.as_play_players():
+        print pp.player, pp.passing_yds
+
+    print sum([x.passing_yds for x in q_brady.as_play_players()])
+
+
 if __name__ == '__main__':
-    passing_yds_by_week()
-    query_from_template()
-    generate_histogram()
+#    passing_yds_by_week()
+#    query_from_template()
+#    generate_histogram()
+    print_brady_by_game()
 
