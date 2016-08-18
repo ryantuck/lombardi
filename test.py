@@ -52,34 +52,13 @@ def generate_histogram():
         fit_histogram(list(results['yards']), 25)
 
 
-def fit_histogram(data, bin_size):
+def num_bins(data, bin_size):
 
     # find max/min values
     d_min = min(data)
     d_max = max(data)
     bins = int((d_max-d_min)/bin_size)
-
-    # generate normalized histogram of relative frequencies
-#    y, x = np.histogram(data, bins=bins, normed=True)
-
-    # generate fit function
-    z = scipy.stats.gaussian_kde(data)
-
-    # get a bunch of x data
-    x = np.linspace(0,600,1000)
-
-    # fit y coordinates to x data
-    y = z(x)
-
-    # normalize y so sum = 1
-    y_norm = [i/sum(y) for i in y]
-
-    return (x,y_norm, bins)
-
-# plot curve and histogram to show hope dope the pairing is
-    plt.plot(x,y,c='r')
-    plt.hist([j - 0.5 for j in data], normed=True, bins=(d_max-d_min))
-    plt.savefig('x.png')
+    return bins
 
 
 def print_brady_by_game():
@@ -90,6 +69,76 @@ def print_brady_by_game():
         print pp.player, pp.passing_yds
 
     print sum([x.passing_yds for x in q_brady.as_play_players()])
+
+
+def plot_player(player, metric, min_year=None, max_year=None, x_max=None):
+
+    data = player_metric(player, metric, min_year=None, max_year=None)
+    plot_stuff(data, x_max, chart_title)
+
+
+def player_metric(player, metric, min_year=None, max_year=None):
+
+    # retrieve data
+    with open('sql/by_game_template.sql') as f:
+        template = Template(f.read())
+
+    query = template.render(
+        player=player,
+        metric=metric,
+        min_year=min_year,
+        max_year=max_year,
+    )
+
+    results = pd.read_sql(query,conn)
+    return list(results[metric])
+
+
+def plot_stuff(data, x_max=None, chart_title='Metric'):
+
+    bin_size = 20
+
+    # dynamically determine x_max
+    if x_max is None:
+        x_max = round(max(data), -2) + 100
+
+    # get some necessary x values
+    x = np.linspace(0, x_max, 1000)
+
+    # fit to kde
+    kde = scipy.stats.gaussian_kde(data)
+    y1 = kde(x)
+
+    # fit to normal distribution
+    mu, std = scipy.stats.norm.fit(data)
+    y2 = scipy.stats.norm.pdf(x, mu, std)
+
+    # fit to gamma dist
+    a,l,b = scipy.stats.gamma.fit(data)
+    rv = scipy.stats.gamma(a,l,b)
+    y3 = rv.pdf(x)
+
+    # plot everything plus histogram
+    fig = plt.figure(figsize=(20,10))
+    fig.suptitle(chart_title, fontsize=20)
+    axes = plt.gca()
+    axes.set_xlim([0, x_max])
+    plt.plot(x, y1, label='kde', lw=2)
+    plt.plot(x, y2, label='normal', lw=2)
+    plt.plot(x, y3, label='gamma', lw=2)
+    plt.hist(
+        [j - bin_size/2 for j in data],
+        normed=True,
+        bins=num_bins(data, bin_size),
+        label='hist',
+        alpha=0.5,
+        width=10,
+        align='mid',
+    )
+    plt.legend()
+
+
+
 
 
 if __name__ == '__main__':
