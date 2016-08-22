@@ -1,44 +1,14 @@
-import nfldb
 from jinja2 import Template
-import pandas as pd
-import scipy.stats
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import scipy.stats
+
+import data as ld
+import stats
 
 
-db = nfldb.connect()
-conn = 'postgres://nfldb:nfldb@localhost:5432/nfldb'
-
-
-def num_bins(data, bin_size):
-
-    # find max/min values
-    d_min = min(data)
-    d_max = max(data)
-    bins = int((d_max-d_min)/bin_size)
-    return bins
-
-
-def player_metric(player, metric, min_year=None, max_year=None):
-
-    # retrieve data
-    with open('sql/by_game_template.sql') as f:
-        template = Template(f.read())
-
-    query = template.render(
-        player=player,
-        metric=metric,
-        min_year=min_year,
-        max_year=max_year,
-    )
-
-    results = pd.read_sql(query,conn)
-    return list(results[metric])
-
-
-def fit_demo(data, x_max=None, chart_title='Metric'):
-
-    bin_size = 20
+def fit_demo(data, x_max=None, bin_size=20, chart_title='Metric', normalize=True):
 
     # dynamically determine x_max
     if x_max is None:
@@ -48,26 +18,13 @@ def fit_demo(data, x_max=None, chart_title='Metric'):
     x = np.linspace(0, x_max, 1000)
 
     # fit to kde
-    kde = scipy.stats.gaussian_kde(data)
-    y1 = kde(x)
-    tot = sum(y1)
-    y1 = [a/tot for a in y1]
+    x, y1 = stats.fit_kde(x, data, normalize)
 
     # fit to normal distribution
-    mu, std = scipy.stats.norm.fit(data)
-    y2 = scipy.stats.norm.pdf(x, mu, std)
-    tot = sum(y2)
-    y2 = [a/tot for a in y2]
+    x, y2 = stats.fit_normal(x, data, normalize)
 
     # fit to gamma dist
-    c = scipy.stats.rv_discrete(name='custom', values=(x,y1))
-    data_kde = c.rvs(size=len(x))
-    print len(data_kde)
-    a,l,b = scipy.stats.gamma.fit(data_kde)
-    rv = scipy.stats.gamma(a,l,b)
-    y3 = rv.pdf(x)
-    tot = sum(y3)
-    y3 = [a/tot for a in y3]
+    x, y3 = stats.fit_gamma(x, data, normalize)
 
     # plot everything plus histogram
     fig = plt.figure(figsize=(20,10))
@@ -80,34 +37,64 @@ def fit_demo(data, x_max=None, chart_title='Metric'):
     plt.hist(
         [j - bin_size/2 for j in data],
         normed=True,
-        bins=num_bins(data, bin_size),
+        bins=stats.num_bins(data, bin_size),
         label='hist',
         alpha=0.5,
-        width=10,
+        width=float(bin_size)/2,
         align='mid',
     )
     plt.legend()
 
 
-def add_gamma_dist(data, x, label=None):
+def add_gamma_dist(data, x, label=None, normalize=True):
 
     # fit to kde
-    kde = scipy.stats.gaussian_kde(data)
-    y_kde = kde(x)
-    y_kde = [a/sum(y_kde) for a in y_kde]
-
-    # get sample data from kde dist for better fitting
-    c = scipy.stats.rv_discrete(name='custom', values=(x,y_kde))
-    data_kde = c.rvs(size=len(x))
-
-    # fit to gamma dist
-    a,l,b = scipy.stats.gamma.fit(data_kde)
-    rv = scipy.stats.gamma(a,l,b)
-    y_gamma = rv.pdf(x)
-    y_gamma = [a/sum(y_gamma) for a in y_gamma]
-
+    x, y_gamma = stats.fit_gamma(x, data, normalize)
     plt.plot(x, y_gamma, label=label)
 
+
+def add_kde(data, x, label=None, normalize=True):
+
+    x, y_kde = stats.fit_gamma(x, data, normalize)
+    plt.plot(x, y_kde, label=label)
+
+
+def plot_players(players, metric, min_year=None, max_year=None):
+
+    x = np.linspace(0, data.metric_range(metric), 1000)
+    plot = plt.figure(figsize=(20,10))
+
+    for player in players:
+
+        player_data = ld.player_metric(
+            player=player,
+            metric=metric,
+            min_year=2014,
+        )
+
+        add_gamma_dist(player_data, x, label=player)
+
+    plt.legend()
+
+
+def plot_player_years(player, metric, min_year=2009, max_year=2015):
+
+    x = np.linspace(0, data.metric_range(metric), 1000)
+    plot = plt.figure(figsize=(20,10))
+
+    for year in range(min_year, max_year+1):
+
+        player_data = ld.player_metric(
+            player=player,
+            metric=metric,
+            min_year=year,
+            max_year=year,
+        )
+
+        if len(player_data) > 0:
+            add_gamma_dist(player_data, x, label=year)
+
+    plt.legend()
 
 
 
