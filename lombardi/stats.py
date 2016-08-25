@@ -63,7 +63,17 @@ def fit_gamma(x, data, normalize=False):
     return x, y_gamma
 
 
+def cdf(x, data):
 
+    x, y_kde = fit_kde(x, data, normalize=True)
+
+    c = scipy.stats.rv_discrete(name='custom', values=(x,y_kde))
+    data_kde = c.rvs(size=len(x))
+    a,l,b = scipy.stats.gamma.fit(data_kde)
+    rv = scipy.stats.gamma(a,l,b)
+    y_cdf = rv.cdf(x)
+
+    return x, y_cdf
 
 
 

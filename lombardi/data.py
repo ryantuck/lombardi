@@ -7,8 +7,8 @@ conn = 'postgres://nfldb:nfldb@localhost:5432/nfldb'
 
 map_metric_range = dict(
     passing_yds=600,
-    rushing_yds=400,
-    receiving_yds=400,
+    rushing_yds=300,
+    receiving_yds=300,
     passing_tds=8,
     rushing_tds=4,
     receiving_tds=4,

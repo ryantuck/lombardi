@@ -61,7 +61,7 @@ def add_kde(data, x, label=None, normalize=True):
 
 def plot_players(players, metric, min_year=None, max_year=None):
 
-    x = np.linspace(0, data.metric_range(metric), 1000)
+    x = np.linspace(0, ld.metric_range(metric), 1000)
     plot = plt.figure(figsize=(20,10))
 
     for player in players:
@@ -79,7 +79,7 @@ def plot_players(players, metric, min_year=None, max_year=None):
 
 def plot_player_years(player, metric, min_year=2009, max_year=2015):
 
-    x = np.linspace(0, data.metric_range(metric), 1000)
+    x = np.linspace(0, ld.metric_range(metric), 1000)
     plot = plt.figure(figsize=(20,10))
 
     for year in range(min_year, max_year+1):
