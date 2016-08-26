@@ -31,6 +31,14 @@ def num_bins(data, bin_size):
     return bins
 
 
+def weight_data(data, weights):
+    data_w = [a*b for a,b in zip(data, weights)]
+    return [
+        int(x * float(sum(data))/sum(data_w))
+        for x in data_w
+    ]
+
+
 def fit_kde(x, data, normalize=False):
 
     kde = scipy.stats.gaussian_kde(data)
@@ -74,6 +82,14 @@ def cdf(x, data):
     y_cdf = rv.cdf(x)
 
     return x, y_cdf
+
+
+def probability_bucket(x, cdf, y1, y2):
+
+    def idx(yds):
+        return int(float(yds) * (len(x)-1)/max(x))
+
+    return cdf[idx(y2)] - cdf[idx(y1)]
 
 
 

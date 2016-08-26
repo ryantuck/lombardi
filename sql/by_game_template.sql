@@ -21,3 +21,6 @@ where
 group by
     week,
     year
+order by
+    year,
+    week
