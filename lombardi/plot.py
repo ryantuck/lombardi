@@ -26,6 +26,16 @@ def fit_demo(data, x_max=None, bin_size=20, chart_title='Metric', normalize=True
     # fit to gamma dist
     x, y3 = stats.fit_gamma(x, data, normalize)
 
+    # fit to poisson distribution
+    x, y4 = stats.fit_poisson(x, data, bin_size, normalize)
+
+    if normalize==True:
+        scale_factor = 2.5
+        y1 = [a*scale_factor for a in y1]
+        y2 = [a*scale_factor for a in y2]
+        y3 = [a*scale_factor for a in y3]
+        y4 = [a*scale_factor for a in y4]
+
     # plot everything plus histogram
     fig = plt.figure(figsize=(20,10))
     fig.suptitle(chart_title, fontsize=20)
@@ -34,6 +44,7 @@ def fit_demo(data, x_max=None, bin_size=20, chart_title='Metric', normalize=True
     plt.plot(x, y1, label='kde', lw=2)
     plt.plot(x, y2, label='normal', lw=2)
     plt.plot(x, y3, label='gamma', lw=2)
+    plt.plot(x, y4, label='poisson', lw=2)
     plt.hist(
         [j - bin_size/2 for j in data],
         normed=True,
