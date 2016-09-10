@@ -82,41 +82,21 @@ def fit_gamma(x, data, normalize=False):
     return x, y_gamma
 
 
+def poisson(k, lamb):
+    """poisson pdf, parameter lamb is the fit parameter"""
+    return (lamb**k/factorial(k)) * np.exp(-lamb)
+
+
 def fit_poisson(x, data, bin_size=25, normalize=False):
 
-    def poisson(k, lamb):
-        """poisson pdf, parameter lamb is the fit parameter"""
-        return (lamb**k/factorial(k)) * np.exp(-lamb)
-
-
-    def negLogLikelihood(params, data):
-        """ the negative log-Likelohood-Function"""
-        lnl = - np.sum(np.log(poisson(data, params[0])))
-        return lnl
-
-    def bin_data(x_sample, bin_size):
-        return (x_sample - x_sample % bin_size) / bin_size
-
+    param = poisson_params(x, data, bin_size)
     x_max = round(max(data), -2) + 100
-
     x = np.linspace(0, x_max, 1000)
-
-    binned = [bin_data(a, bin_size) for a in data]
-
-    # minimize the negative log-Likelihood
-    result = minimize(negLogLikelihood,  # function to minimize
-                      x0=np.ones(1),     # start value
-                      args=(binned,),      # additional arguments for function
-                      method='Powell',   # minimization method, see docs
-                      )
-    # result is a scipy optimize result object, the fit parameters
-    # are stored in result.x
-
-    # plot poisson-deviation with fitted parameter
     x_plot = np.linspace(0, x_max/bin_size, 1000)
 
     # normalize poisson distribution
-    y_poisson = poisson(x_plot, result.x)
+
+    y_poisson = poisson(x_plot, param)
 
     if normalize:
         y_poisson = [a/sum(y_poisson) for a in y_poisson]
@@ -137,6 +117,42 @@ def gamma_params(x, data):
     # fit to gamma
     a,l,b = scipy.stats.gamma.fit(data_kde_pos, floc=0)
     return a,b
+
+
+def poisson_params(x, data, bin_size=25, x_max=300):
+
+    # get kde first (bc gamma shits the bed sometimes :shrug:)
+    data_pos = [a for a in data if a > 0]
+    x, y_kde = fit_kde(x, data_pos, normalize=True)
+    c = scipy.stats.rv_discrete(name='custom', values=(x,y_kde))
+    data_kde = c.rvs(size=len(x))
+    data_kde_pos = [a for a in data_kde if a > 0]
+
+    def negLogLikelihood(params, data):
+        """ the negative log-Likelohood-Function"""
+        lnl = - np.sum(np.log(poisson(data, params[0])))
+        return lnl
+
+    def bin_data(x_sample, bin_size):
+        return (x_sample - x_sample % bin_size) / bin_size
+
+    #x_max = round(max(data), -2) + 100
+
+    x = np.linspace(0, x_max, 1000)
+
+    binned = [bin_data(a, bin_size) for a in data_kde_pos]
+
+    binned_pos = [a for a in binned if a > 0]
+
+    # minimize the negative log-Likelihood
+    result = minimize(negLogLikelihood,  # function to minimize
+                      x0=np.ones(1),     # start value
+                      args=(binned_pos,),      # additional arguments for function
+                      method='Powell',   # minimization method, see docs
+                      )
+
+    print x_max, float(result.x)
+    return float(result.x)
 
 
 def cdf(x, data):

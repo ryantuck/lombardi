@@ -41,6 +41,14 @@ def player_df(player, metric, min_year=None, max_year=None):
     return pd.read_sql(query,read_conn).sort_values(by=['year', 'week'])
 
 
+def active_rbs():
+
+    with open('sql/rb_list.sql') as f:
+        query = f.read()
+
+    return pd.read_sql(query,read_conn)
+
+
 def demo_players():
     return {
         'qb': {
