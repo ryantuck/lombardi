@@ -1,3 +1,1 @@
-import data
-import plot
-import stats
+from . import bayes

@@ -1,4 +1,5 @@
 # lombardi
 
-An attempt at automating fantasy football.
+Building an open-source fantasy football analysis framework.
 
+Current progress: `bayes_qb_tds.ipynb`.

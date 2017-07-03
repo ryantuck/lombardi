@@ -1,3 +1,5 @@
+drop table if exists lombardi.qb_stats;
+
 create table lombardi.qb_stats as
 
 select
