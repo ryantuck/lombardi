@@ -5,7 +5,7 @@ create table lombardi.qb_stats as
 select
     g.season_year as year,
     g.week,
-    p.full_name,
+    p.full_name as name,
     sum(pp.passing_yds) as yards,
     sum(pp.passing_tds) as touchdowns,
     sum(pp.passing_int) as interceptions,

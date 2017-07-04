@@ -4,7 +4,7 @@ create table lombardi.qb_aggs as
 
 select
     year,
-    full_name,
+    name,
 
     round(avg(yards), 2) as avg_yds,
     round(avg(touchdowns), 2) as avg_tds,
@@ -23,8 +23,8 @@ from
     lombardi.qb_stats
 group by
     year,
-    full_name
+    name
 order by
     year,
-    full_name
+    name
 ;
