@@ -1,6 +1,6 @@
-drop table if exists lombardi.def_stats;
+drop table if exists lombardi.def_rb_stats;
 
-create table lombardi.def_stats as
+create table lombardi.def_rb_stats as
 
 select
     case
@@ -13,9 +13,7 @@ select
     team as opp,
     yards,
     touchdowns,
-    interceptions,
-    attempts,
-    completions
+    attempts
 from
-    lombardi.qb_stats
+    lombardi.rb_stats
 ;

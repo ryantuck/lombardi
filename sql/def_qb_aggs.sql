@@ -1,6 +1,6 @@
-drop table if exists lombardi.def_aggs;
+drop table if exists lombardi.def_qb_aggs;
 
-create table lombardi.def_aggs as
+create table lombardi.def_qb_aggs as
 
 select
     year,
@@ -20,7 +20,7 @@ select
 
     count(*) as num_games
 from
-    lombardi.def_games
+    lombardi.def_qb_games
 group by
     year,
     name
