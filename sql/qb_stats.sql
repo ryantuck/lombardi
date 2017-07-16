@@ -6,6 +6,9 @@ select
     g.season_year as year,
     g.week,
     p.full_name as name,
+    pp.team,
+    g.home_team,
+    g.away_team,
     sum(pp.passing_yds) as yards,
     sum(pp.passing_tds) as touchdowns,
     sum(pp.passing_int) as interceptions,
@@ -19,14 +22,10 @@ from
         player p using (player_id)
 where
     g.season_type = 'Regular' and
-    p.position = 'QB' and
+--    p.position = 'QB' and
     pp.passing_att > 0
 group by
-    g.week,
-    g.season_year,
-    p.full_name
+    1,2,3,4,5,6
 order by
-    year,
-    week,
-    full_name
+    1,2,3
 ;
