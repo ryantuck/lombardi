@@ -57,7 +57,7 @@ def season_buckets(season_param, season_bins, position):
 def game_buckets(game_param, game_bins, position):
 
     # extract data
-    table_name = '{}_stats'.format(position)
+    table_name = '{}_games'.format(position)
     games = petl.fromdb(conn, 'select * from lombardi.{}'.format(table_name))
 
     vals = [float(y) for y in games[game_param]]

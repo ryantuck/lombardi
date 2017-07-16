@@ -22,7 +22,6 @@ from
         player p using (player_id)
 where
     g.season_type = 'Regular' and
---    p.position = 'QB' and
     pp.passing_att > 0
 group by
     1,2,3,4,5,6
