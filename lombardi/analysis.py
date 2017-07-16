@@ -18,10 +18,15 @@ warnings.filterwarnings(action="ignore", module="scipy", message="^internal gels
 conn = psycopg2.connect('dbname=nfldb')
 
 
-def season_buckets(season_param, season_bins):
+def season_buckets(season_param, season_bins, position):
 
     # extract data
-    full_seasons = petl.fromdb(conn, 'select * from lombardi.qb_aggs').selecteq('num_games', 16)
+    table_name = '{}_aggs'.format(position)
+    full_seasons = (
+        petl
+        .fromdb(conn, 'select * from lombardi.{}'.format(table_name))
+        .selecteq('num_games', 16)
+    )
 
     vals = [float(y) for y in full_seasons[season_param]]
 
@@ -49,12 +54,13 @@ def season_buckets(season_param, season_bins):
     return seasons
 
 
-def game_buckets(game_param, game_bins):
+def game_buckets(game_param, game_bins, position):
 
     # extract data
-    qb_games = petl.fromdb(conn, 'select * from lombardi.qb_stats')
+    table_name = '{}_stats'.format(position)
+    games = petl.fromdb(conn, 'select * from lombardi.{}'.format(table_name))
 
-    vals = [float(y) for y in qb_games[game_param]]
+    vals = [float(y) for y in games[game_param]]
 
     # calculate params for our model
     min_v = min(vals)
@@ -67,8 +73,8 @@ def game_buckets(game_param, game_bins):
         return v
 
     # bucket vals
-    games = (
-        qb_games
+    bucketed_games = (
+        games
         .addfield('normed_v', lambda r: float(r[game_param]) - min_v)
         .addfield('bucket', lambda r: int(r['normed_v'] // bin_size))
         .convert(game_param, float)
@@ -77,7 +83,7 @@ def game_buckets(game_param, game_bins):
         .cut(('year', 'name', 'week', game_param, 'bucket'))
     )
 
-    return games
+    return bucketed_games
 
 
 def season_game_bucket_combo_probs(sbs, gbs):
@@ -125,7 +131,7 @@ def season_game_bucket_combo_probs(sbs, gbs):
     return g_bucket_probs
 
 
-def data_dicts(sbs, gbs):
+def data_dicts(sbs, gbs, game_param):
 
     season_dicts = petl.dicts(sbs)
     game_dicts = petl.dicts(gbs)
@@ -136,7 +142,7 @@ def data_dicts(sbs, gbs):
         gd = [
             {
                 k:v for k,v in x.items()
-                if k in ['yards', 'week', 'bucket']
+                if k in [game_param, 'week', 'bucket']
             }
             for x in game_dicts
             if x['year'] == s['year']
@@ -264,11 +270,11 @@ def rmse_analysis(runs):
     )
 
 
-def analyze(season_bins, game_bins):
+def analyze(season_bins, game_bins, season_param, game_param, position):
 
     # extract bucketed season / game performance
-    gbs = game_buckets('yards', game_bins)
-    sbs = season_buckets('avg_yds', season_bins)
+    gbs = game_buckets(game_param, game_bins, position)
+    sbs = season_buckets(season_param, season_bins, position)
 
     # create probability distribution tables for seasons / games
     s_bucket_probs = bucket_dist(sbs)
@@ -291,7 +297,7 @@ def analyze(season_bins, game_bins):
     prior = {s['bucket']: s['prob'] for s in s_bucket_dicts}
 
     # get appropriately-formed data
-    data = data_dicts(sbs, gbs)
+    data = data_dicts(sbs, gbs, game_param)
 
     # run analysis on data
     runs = conduct_runs(data, likelihoods, prior)
