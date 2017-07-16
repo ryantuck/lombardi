@@ -3,7 +3,7 @@ drop table if exists lombardi.def_games;
 create table lombardi.def_games as
 
 select
-    defense,
+    name,
     year,
     week,
     opp,

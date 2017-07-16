@@ -7,7 +7,7 @@ select
         when team = home_team then away_team
         when team = away_team then home_team
         else null
-        end as defense,
+        end as name,
     year,
     week,
     team as opp,

@@ -4,7 +4,7 @@ create table lombardi.def_aggs as
 
 select
     year,
-    defense,
+    name,
 
     round(avg(yards), 2) as avg_yds,
     round(avg(touchdowns), 2) as avg_tds,
@@ -23,8 +23,8 @@ from
     lombardi.def_games
 group by
     year,
-    defense
+    name
 order by
     year,
-    defense
+    name
 ;
